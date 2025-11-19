@@ -24,10 +24,13 @@ public sealed class LauncherViewModel : INotifyPropertyChanged
     private readonly LauncherConfigService _configService;
     private readonly LauncherConfig _config;
 
-    private readonly string? _clientDirectory;
-    private readonly string? _gameExecutablePath;
+    private readonly string _clientDirectory;
+    private readonly string? _gameExecutableSetting;
+    private string? _gameExecutablePath;
     private readonly string? _websiteUrl;
     private readonly string? _assetsManifestPath;
+    private readonly string? _downloadUrl;
+    private readonly string? _downloadFileName;
 
     private double _downloadProgress;
     private string _downloadStatus = "Pronto para verificar atualizações";
@@ -39,18 +42,19 @@ public sealed class LauncherViewModel : INotifyPropertyChanged
         _config = config ?? new LauncherConfig();
         _configService = configService;
 
-        _clientDirectory = ResolvePath(_config.ClientDirectory);
+        _clientDirectory = ResolvePath(_config.ClientDirectory) ?? Path.Combine(AppContext.BaseDirectory, "Client");
         _assetsManifestPath = ResolveAssetsManifestPath(_clientDirectory, _config.AssetsManifest);
-        _gameExecutablePath = ResolveGameExecutablePath(_config.GameExecutable, _clientDirectory);
+        _gameExecutableSetting = _config.GameExecutable;
+        _gameExecutablePath = ResolveGameExecutablePath(_gameExecutableSetting, _clientDirectory);
         _websiteUrl = _config.WebsiteUrl;
+        _downloadUrl = _config.DownloadPackageUrl;
+        _downloadFileName = _config.DownloadPackageFileName;
 
         GameTitle = string.IsNullOrWhiteSpace(_config.GameTitle) ? "Crystal Shards" : _config.GameTitle!;
         Tagline = string.IsNullOrWhiteSpace(_config.Tagline) ? "Desperte o poder antigo e proteja o seu reino" : _config.Tagline!;
         BuildVersion = string.IsNullOrWhiteSpace(_config.BuildVersion) ? "Build 1.0.0" : _config.BuildVersion!;
 
-        ClientDirectoryDisplay = string.IsNullOrWhiteSpace(_clientDirectory)
-            ? "Client não configurado"
-            : _clientDirectory;
+        ClientDirectoryDisplay = _clientDirectory;
 
         ServerState = ParseServerState(_config.DefaultServerState) ?? ServerState.Online;
 
@@ -75,12 +79,14 @@ public sealed class LauncherViewModel : INotifyPropertyChanged
             SeedDefaultPatchNotes();
         }
 
-        PlayCommand = new RelayCommand(_ => TriggerPlay(), _ => !IsBusy && IsGameExecutableAvailable);
+        PlayCommand = new RelayCommand(_ => TriggerPlay(), _ => !IsBusy);
         VerifyCommand = new RelayCommand(_ => VerifyClientAsync(), _ => !IsBusy);
+        DownloadCommand = new RelayCommand(_ => DownloadClientAsync(), _ => !IsBusy && IsDownloadEnabled);
         OpenSettingsCommand = new RelayCommand(_ => OpenSettings(), _ => !IsBusy);
         OpenSiteCommand = new RelayCommand(_ => OpenSite(), _ => !string.IsNullOrWhiteSpace(_websiteUrl));
 
         _ = InitializeAsync();
+        RefreshExecutableState();
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -101,9 +107,13 @@ public sealed class LauncherViewModel : INotifyPropertyChanged
 
     public ICommand VerifyCommand { get; }
 
+    public ICommand DownloadCommand { get; }
+
     public ICommand OpenSiteCommand { get; }
 
     public ICommand OpenSettingsCommand { get; }
+
+    public bool IsDownloadEnabled => !string.IsNullOrWhiteSpace(_downloadUrl);
 
     public double DownloadProgress
     {
@@ -261,16 +271,73 @@ public sealed class LauncherViewModel : INotifyPropertyChanged
         }
     }
 
+    private async void DownloadClientAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_downloadUrl))
+        {
+            DownloadStatus = "URL de download não configurada.";
+            return;
+        }
+
+        try
+        {
+            IsBusy = true;
+            DownloadProgress = 0;
+            DownloadStatus = "Baixando client...";
+
+            Directory.CreateDirectory(_clientDirectory);
+
+            var targetFileName = !string.IsNullOrWhiteSpace(_downloadFileName)
+                ? _downloadFileName!
+                : TryGetFileNameFromUrl(_downloadUrl);
+
+            if (string.IsNullOrWhiteSpace(targetFileName))
+            {
+                targetFileName = "client-download.bin";
+            }
+
+            var destinationFile = Path.Combine(_clientDirectory, targetFileName);
+
+            using var httpClient = new HttpClient();
+            using var response = await httpClient.GetAsync(_downloadUrl, HttpCompletionOption.ResponseHeadersRead);
+            response.EnsureSuccessStatusCode();
+
+            var contentLength = response.Content.Headers.ContentLength ?? -1;
+            await using var downloadStream = await response.Content.ReadAsStreamAsync();
+            await using var fileStream = File.Create(destinationFile);
+
+            var buffer = new byte[81920];
+            long totalRead = 0;
+            int bytesRead;
+            while ((bytesRead = await downloadStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+            {
+                await fileStream.WriteAsync(buffer, 0, bytesRead);
+                totalRead += bytesRead;
+
+                if (contentLength > 0)
+                {
+                    DownloadProgress = totalRead * 100.0 / contentLength;
+                }
+            }
+
+            DownloadProgress = 100;
+            DownloadStatus = $"Download concluído: {targetFileName}. Extraia o conteúdo para {_clientDirectory}.";
+        }
+        catch (Exception ex)
+        {
+            DownloadStatus = $"Falha no download: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+            RefreshExecutableState();
+        }
+    }
+
     private void VerifyClientAsync()
     {
         if (IsBusy)
         {
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(_clientDirectory))
-        {
-            DownloadStatus = "Diretório do client não configurado.";
             return;
         }
 
@@ -281,7 +348,7 @@ public sealed class LauncherViewModel : INotifyPropertyChanged
         }
 
         var manifestPath = ResolveManifestPath();
-        if (manifestPath == null || !File.Exists(manifestPath))
+        if (!File.Exists(manifestPath))
         {
             DownloadStatus = "Manifesto assets.json não encontrado.";
             return;
@@ -315,7 +382,7 @@ public sealed class LauncherViewModel : INotifyPropertyChanged
             {
                 processed++;
 
-                if (!string.IsNullOrWhiteSpace(entry.LocalFile) && _clientDirectory != null)
+                if (!string.IsNullOrWhiteSpace(entry.LocalFile))
                 {
                     var localPath = ResolveClientFilePath(_clientDirectory, entry.LocalFile);
                     if (!File.Exists(localPath))
@@ -354,9 +421,13 @@ public sealed class LauncherViewModel : INotifyPropertyChanged
 
     private void TriggerPlay()
     {
+        RefreshExecutableState();
+
         if (!IsGameExecutableAvailable)
         {
-            DownloadStatus = "Executável não configurado ou não encontrado.";
+            DownloadStatus = IsDownloadEnabled
+                ? "Client não encontrado. Use o botão Download para instalar antes de jogar."
+                : "Executável não configurado ou não encontrado.";
             return;
         }
 
@@ -445,16 +516,28 @@ public sealed class LauncherViewModel : INotifyPropertyChanged
         {
             relaySite.RaiseCanExecuteChanged();
         }
+
+        if (DownloadCommand is RelayCommand relayDownload)
+        {
+            relayDownload.RaiseCanExecuteChanged();
+        }
     }
 
-    private string? ResolveManifestPath()
+    private void RefreshExecutableState()
+    {
+        _gameExecutablePath = ResolveGameExecutablePath(_gameExecutableSetting, _clientDirectory);
+        OnPropertyChanged(nameof(IsGameExecutableAvailable));
+        RaiseCommandStates();
+    }
+
+    private string ResolveManifestPath()
     {
         if (!string.IsNullOrWhiteSpace(_assetsManifestPath))
         {
             return _assetsManifestPath;
         }
 
-        return _clientDirectory == null ? null : Path.Combine(_clientDirectory, "assets.json");
+        return Path.Combine(_clientDirectory, "assets.json");
     }
 
     private static string? ResolveAssetsManifestPath(string? clientDirectory, string? manifestSetting)
@@ -603,6 +686,25 @@ public sealed class LauncherViewModel : INotifyPropertyChanged
 
         value = false;
         return false;
+    }
+
+    private static string? TryGetFileNameFromUrl(string url)
+    {
+        try
+        {
+            var uri = new Uri(url, UriKind.RelativeOrAbsolute);
+            if (!uri.IsAbsoluteUri)
+            {
+                return Path.GetFileName(url);
+            }
+
+            var fileName = Path.GetFileName(uri.LocalPath);
+            return string.IsNullOrWhiteSpace(fileName) ? null : fileName;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static ServerState? ParseServerState(string? state)

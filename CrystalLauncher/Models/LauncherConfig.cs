@@ -40,6 +40,11 @@ public sealed class LauncherConfig
 
     [JsonPropertyName("defaultServerState")]
     public string? DefaultServerState { get; set; }
+        [JsonPropertyName("downloadPackageUrl")]
+        public string? DownloadPackageUrl { get; set; }
+
+        [JsonPropertyName("downloadPackageFileName")]
+        public string? DownloadPackageFileName { get; set; }
 
     [JsonPropertyName("news")]
     public List<NewsEntry>? News { get; set; }

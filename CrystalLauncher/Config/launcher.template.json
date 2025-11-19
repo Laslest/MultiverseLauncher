@@ -3,14 +3,16 @@
   "gameTitle": "Crystal Shards",
   "tagline": "Desperte o poder antigo e proteja o seu reino",
   "buildVersion": "Build 1.0.0",
-  "clientDirectory": "C:/crystalserver/15.11 localhost",
-  "gameExecutable": "bin/client_launcher.exe",
+  "clientDirectory": "Clients/Multiverse",
+  "gameExecutable": "bin/multiverse_client.exe",
   "assetsManifest": "assets.json",
   "websiteUrl": "https://example.com",
   "newsFeed": "https://example.com/api/news.json",
   "patchNotesFeed": "https://example.com/api/patchnotes.json",
   "statusEndpoint": "https://example.com/api/status",
   "defaultServerState": "online",
+  "downloadPackageUrl": "https://example.com/downloads/multiverse-client.zip",
+  "downloadPackageFileName": "multiverse-client.zip",
   "news": [
     {
       "title": "Temporada Eclipse",

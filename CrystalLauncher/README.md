@@ -6,7 +6,7 @@ Launcher moderno em WPF inspirado nos patchers de MMORPG clássicos. Ele carrega
 
 - UI customizada com tema translúcido, cards de notícias e patch notes.
 - Carregamento assíncrono das configurações com fallback local (`Config/launcher.json`) e opção de override remoto (`rawConfigUrl`).
-- Botões para jogar, verificar integridade (varre `assets.json`) e abrir o arquivo de configuração.
+- Botões para jogar, baixar o client a partir de um pacote hospedado e verificar integridade (`assets.json`).
 - Atualização automática do status do servidor quando configurado um endpoint JSON.
 - Suporte a feeds de notícias/patch notes locais ou remotos (JSON).
 
@@ -20,13 +20,16 @@ Config/
 
 Campos importantes de `launcher.json`:
 
-- `clientDirectory`: caminho absoluto do client (ex.: `C:/crystalserver/15.11 localhost`).
-- `gameExecutable`: executável relativo ao diretório do client (`bin/client_launcher.exe`).
+- `clientDirectory`: diretório do client (aceita relativo ao launcher, ex.: `Clients/Multiverse`).
+- `gameExecutable`: executável relativo ao diretório do client (`bin/multiverse_client.exe`).
 - `assetsManifest`: Manifesto de assets usado na verificação (`assets.json`).
 - `rawConfigUrl`: URL para sobrescrever a configuração via `raw.githubusercontent.com`.
 - `news` / `patchNotes`: coleções exibidas na UI se não houver feeds remotos.
 - `newsFeed` / `patchNotesFeed`: URLs de JSON para carregar dados dinâmicos.
 - `statusEndpoint`: URL JSON com o estado do servidor (`state`, `status`, `online` ou `maintenance`).
+- `downloadPackageUrl` / `downloadPackageFileName`: endereço e nome do arquivo que será baixado pelo botão **Download**.
+
+O `launcher.json` distribuído aqui utiliza apenas caminhos genéricos e pode ser versionado/publicado sem expor diretórios locais sensíveis.
 
 ## Publicando no GitHub (`Laslest/MultiverseLauncher`)
 

@@ -3,8 +3,8 @@
   "gameTitle": "Multiverse Crystal",
   "tagline": "Entre em um universo persistente inspirado nos clássicos MMORPGs",
   "buildVersion": "Build 15.11",
-  "clientDirectory": "C:/crystalserver/15.11 localhost",
-  "gameExecutable": "bin/client_launcher.exe",
+  "clientDirectory": "Clients/Multiverse",
+  "gameExecutable": "bin/multiverse_client.exe",
   "assetsManifest": "assets.json",
   "websiteUrl": "https://github.com/Laslest/MultiverseLauncher",
   "news": [
@@ -32,5 +32,7 @@
     }
   ],
   "statusEndpoint": "https://raw.githubusercontent.com/Laslest/MultiverseLauncher/main/status.json",
-  "defaultServerState": "maintenance"
+  "defaultServerState": "maintenance",
+  "downloadPackageUrl": "https://github.com/Laslest/MultiverseLauncher/releases/latest/download/multiverse-client.zip",
+  "downloadPackageFileName": "multiverse-client.zip"
 }
