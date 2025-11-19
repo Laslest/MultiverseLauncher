@@ -1,0 +1,28 @@
+{
+  "rawConfigUrl": "https://raw.githubusercontent.com/Laslest/MultiverseLauncher/main/Config/launcher.json",
+  "gameTitle": "Crystal Shards",
+  "tagline": "Desperte o poder antigo e proteja o seu reino",
+  "buildVersion": "Build 1.0.0",
+  "clientDirectory": "C:/crystalserver/15.11 localhost",
+  "gameExecutable": "bin/client_launcher.exe",
+  "assetsManifest": "assets.json",
+  "websiteUrl": "https://example.com",
+  "newsFeed": "https://example.com/api/news.json",
+  "patchNotesFeed": "https://example.com/api/patchnotes.json",
+  "statusEndpoint": "https://example.com/api/status",
+  "defaultServerState": "online",
+  "news": [
+    {
+      "title": "Temporada Eclipse",
+      "subtitle": "Eventos dinâmicos chegam com novos desafios",
+      "publishedAt": "19 NOV 2025",
+      "tag": "EVENTO"
+    }
+  ],
+  "patchNotes": [
+    {
+      "version": "1.0.0",
+      "summary": "Release inicial do Crystal Launcher com visual moderno e monitoramento de status."
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "rawConfigUrl": "https://raw.githubusercontent.com/Laslest/MultiverseLauncher/main/Config/launcher.json",
+  "gameTitle": "Multiverse Crystal",
+  "tagline": "Entre em um universo persistente inspirado nos clássicos MMORPGs",
+  "buildVersion": "Build 15.11",
+  "clientDirectory": "C:/crystalserver/15.11 localhost",
+  "gameExecutable": "bin/client_launcher.exe",
+  "assetsManifest": "assets.json",
+  "websiteUrl": "https://github.com/Laslest/MultiverseLauncher",
+  "news": [
+    {
+      "title": "Servidor Localhost Atualizado",
+      "subtitle": "Client 15.11 pronto para testes internos",
+      "publishedAt": "19 NOV 2025",
+      "tag": "DEV"
+    },
+    {
+      "title": "Integração com Launcher",
+      "subtitle": "Novo launcher WPF com visual inspirado em MU e Aura Kingdom",
+      "publishedAt": "18 NOV 2025",
+      "tag": "LANÇAMENTO"
+    }
+  ],
+  "patchNotes": [
+    {
+      "version": "15.11",
+      "summary": "Sincronização dos assets e pacote principal do client."
+    },
+    {
+      "version": "15.10",
+      "summary": "Assets de UI atualizados para estilo anime."
+    }
+  ],
+  "statusEndpoint": "https://raw.githubusercontent.com/Laslest/MultiverseLauncher/main/status.json",
+  "defaultServerState": "maintenance"
+}
